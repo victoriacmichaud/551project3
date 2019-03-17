@@ -101,7 +101,7 @@ def main():
                     )
             
         
-        if not args.quite_scores:
+        if not args.quiet_scores:
             print(f"Epoch {epoch+1}/{epochs}, training loss: {total_loss/batches}, validation loss: {val_losses/val_batches}")
             util.print_scores(precision, recall, f1, accuracy, val_batches)
         losses.append(total_loss/batches) # for plotting learning curve
