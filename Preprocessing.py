@@ -12,7 +12,7 @@ test_images = pd.read_pickle('test_images.pkl')
 #print(train_images.shape)
 #print(test_images.shape)
 
-# plt.title('Label: {}'.format(train_labels.iloc[img_idx]['Category']))
+#plt.title('Label: {}'.format(train_labels.iloc[img_idx]['Category']))
 #plt.imshow(train_images[10])
 #plt.show()
 
