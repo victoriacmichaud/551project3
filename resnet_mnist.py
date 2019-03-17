@@ -9,6 +9,7 @@ import time
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 # Local imports
 import util
@@ -99,12 +100,19 @@ def main():
                         util.calculate_metric(metric, y.cpu(), predicted_classes.cpu())
                     )
             
-        print(f"Epoch {epoch+1}/{epochs}, training loss: {total_loss/batches}, validation loss: {val_losses/val_batches}")
-        util.print_scores(precision, recall, f1, accuracy, val_batches)
+        
+        if not args.quite_scores:
+            print(f"Epoch {epoch+1}/{epochs}, training loss: {total_loss/batches}, validation loss: {val_losses/val_batches}")
+            util.print_scores(precision, recall, f1, accuracy, val_batches)
         losses.append(total_loss/batches) # for plotting learning curve
     print(f"Training time: {time.time()-start_ts}s")
 
     if args.save_model:
+        if not os.path.basename(args.save_name) == args.save_name:
+            # If there's a dir in the filename that DNE, create it
+            d = os.path.split(args.save_name)[0]
+            if not os.path.exists(d):
+                os.makedirs(d)
         torch.save(model.state_dict(), args.save_name)
 
     if args.plot:
@@ -124,18 +132,20 @@ def parse_args():
                         help='input batch size for testing (default: 500)')
     parser.add_argument('--epochs', type=int, default=10, metavar='N',
                         help='number of epochs to train (default: 10)')
-    parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
-                        help='learning rate (default: 0.01)')
-    parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
-                        help='SGD momentum (default: 0.5)')
+    # parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
+    #                     help='learning rate (default: 0.01)')
+    # parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
+    #                     help='SGD momentum (default: 0.5)')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
     parser.add_argument('--save-model', action='store_true', default=False,
-                        help='For Saving the current Model')
+                        help='For Saving the current Model. Will overwrite files')
     parser.add_argument('--save-name', type=str, default='models/resnet_mnist.pt',
                         help='Filename to save model to (default: models/resnet_mnist.pt')
     parser.add_argument('--plot', action='store_true', default=False,
                         help='Plot learning curve')
+    parser.add_argument('--quiet-scores', action='store_true', default=False,
+                        help='Suppress printing of metrics after each epoch')
     return parser.parse_args()
 
 if __name__ == '__main__':

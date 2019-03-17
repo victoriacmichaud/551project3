@@ -70,6 +70,12 @@ def load_data(train_porportion=0.8, split_train=True, include_ids=False):
         return train_images, train_labels
 
 def data_loaders(train_params, test_params, transfer_learning=False):
+    """ Return torch.util.data.DataLoader objects for train and valid sets
+
+    <train/test>_params should contain at least these keys:
+        'batch_size': <int>
+        'shuffle': <bool>
+    """
     X, Y, Xtest, Ytest = load_data(include_ids=True)
 
     # Use full training set to calculate metrics for normalizations
