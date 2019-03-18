@@ -33,7 +33,10 @@ def main():
     input_dir = 'data/input'
     train_labels = pd.read_csv(pj(input_dir, 'train_labels.csv'))
 
-    suffixes = ['images', 'pix_1', 'ellipse_1', 'rect_1']
+    # pix_1 and ellipse_1 have extra images in them (3x and 2x), so they don't
+    # match up with the training labels anymore, so they're excluded for now.
+    # suffixes = ['images', 'pix_1', 'ellipse_1', 'rect_1']
+    suffixes = ['images', 'rect_1']
     for s in suffixes:
         f = '_'.join(('train', s +'.pkl')) 
         train_images = pd.read_pickle(pj(input_dir, f))
@@ -60,7 +63,7 @@ def run_model(train_images, train_labels, clf, model_name, save_dir='',
         model_name-report.csv : classification report
         model_name-confusion_matrix.png : confusion matrix plot
     """
-    print('Running model', model_name)
+    print('\nRunning model', model_name)
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
