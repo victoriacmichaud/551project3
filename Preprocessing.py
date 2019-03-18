@@ -193,11 +193,6 @@ def preprocessTestNumPixels():
 		newimg = cv2.bitwise_and(thresh, thresh, mask=mask)
 		xtest.append(newimg)
 
-
-
-xtrain = []
-xtest = []
-
 def save_processed(filename, dataset):
 	with open (filename, 'wb') as f:
 		pickle.dump(dataset, f)
@@ -205,6 +200,7 @@ def save_processed(filename, dataset):
 """ Largest Rotated Rectangle """
 
 print('Rectangle')
+xtrain, xtest = [], []
 preprocessTrainMinRect()
 preprocessTestMinRect()
 
@@ -214,6 +210,7 @@ save_processed("test_rect_1.pkl", xtest)
 """ Largest Rotated Ellipse """
 
 print('Ellipse')
+xtrain, xtest = [], []
 preprocessTrainMinEllipse()
 preprocessTestMinEllipse()
 
@@ -223,23 +220,10 @@ save_processed("test_ellipse_1.pkl", xtest)
 """ Greatest Area Contour """
 
 print('Countour')
+xtrain, xtest = [], []
 preprocessTrainNumPixels()
 preprocessTestNumPixels()
 
 save_processed("train_pix_1.pkl", xtrain)
 save_processed("test_pix_1.pkl", xtest)
-
-#Example
-plt.imshow(train_images[12])
-plt.show()
-
-plt.imshow(xtrain[12])
-plt.show()
-
-# plt.imshow(test_images[16])
-# plt.show()
-
-# plt.imshow(xtest[16])
-# plt.show()
-
 
