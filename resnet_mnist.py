@@ -10,14 +10,29 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import pandas as pd
+import warnings
+
+# Try to make tensorboardX work
+import torchvision.utils as vutils
+from tensorboardX import SummaryWriter
 
 # Local imports
 import util
 from MnistResNet import MnistResNet
 
-
 def main():
     args = parse_args()
+
+    # Create a Writer object for tensorboard
+    if args.tensorboard:
+        writer = SummaryWriter(args.tensorboard)
+    else: 
+        writer = SummaryWriter()
+
+    # Option to suppress warnings from output
+    if args.ignore_warnings:
+        warnings.filterwarnings('ignore') 
 
     # Seed for repeatability
     torch.manual_seed(args.seed)
@@ -26,8 +41,12 @@ def main():
     start_ts = time.time()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+
     # Init model and move to gpu, if possible
     model = MnistResNet().to(device)
+    if args.load:
+        model.load_state_dict(torch.load(args.load))
+        print('Loaded model weights from', args.load)
 
     # Get the DataLoaders for train and validation (test) sets
     train_params = {'batch_size': args.batch_size, 'shuffle': True}
@@ -41,6 +60,10 @@ def main():
     optimizer = optim.Adadelta(model.parameters())
 
     losses = []
+    metrics = {'precision': [],
+               'recall':[],
+               'F1': [],
+               'accuracy': []}
     batches = len(train_loader)
     val_batches = len(val_loader)
 
@@ -71,7 +94,8 @@ def main():
             total_loss += current_loss
 
             # updating progress bar
-            progress.set_description("Loss: {:.4f}".format(total_loss/(i+1)))
+            progress.set_description("Epoch %d/%d " %(epoch+1, epochs)
+                +"Loss: {:.4f}".format(total_loss/(i+1)))
             
         # releasing unceseccary memory in GPU
         if torch.cuda.is_available():
@@ -101,27 +125,49 @@ def main():
                     )
             
         
+        train_loss = total_loss/batches
+        val_loss = val_losses/val_batches
+        print(f"Epoch {epoch+1}/{epochs}, training loss: {train_loss}, validation loss: {val_loss}")
         if not args.quiet_scores:
-            print(f"Epoch {epoch+1}/{epochs}, training loss: {total_loss/batches}, validation loss: {val_losses/val_batches}")
             util.print_scores(precision, recall, f1, accuracy, val_batches)
-        losses.append(total_loss/batches) # for plotting learning curve
+
+        # for plotting learning curve
+        losses.append(train_loss) 
+        metrics = util.append_metrics(precision, recall, f1, accuracy, val_batches, metrics)
+        
+        # Update tensorboard
+        writer.add_scalar('train_loss', train_loss, epoch)
+        writer.add_scalar('valid_loss', val_loss, epoch)
+        writer.add_scalar('valid_f1', sum(f1)/val_batches, epoch)
+        writer.add_scalar('valid_accuracy', sum(accuracy)/val_batches, epoch)
+        writer.add_scalar('valid_precision', sum(precision)/val_batches, epoch)
+        writer.add_scalar('valid_recall', sum(recall)/val_batches, epoch)
+
     print(f"Training time: {time.time()-start_ts}s")
 
+
     if args.save_model:
-        if not os.path.basename(args.save_name) == args.save_name:
+        if not os.path.basename(args.save_model) == args.save_model:
             # If there's a dir in the filename that DNE, create it
-            d = os.path.split(args.save_name)[0]
+            d = os.path.split(args.save_model)[0]
             if not os.path.exists(d):
                 os.makedirs(d)
-        torch.save(model.state_dict(), args.save_name)
+        torch.save(model.state_dict(), args.save_model)
+
+        # Write a csv file of the model's metrics
+        df = pd.DataFrame(metrics)
+        csvname = os.path.splitext(args.save_model)[0] + '.csv'
+        df.to_csv(csvname, index=False)
 
     if args.plot:
         x_ax = range(1, epochs+1)
+        plt.title('Train Losses')
         plt.xlabel('Epochs')
         plt.ylabel('Losses')
         plt.plot(x_ax, losses)
         plt.xticks(np.arange(1, x_ax[-1], 1))
         plt.show()
+        plt.savefig('resnet_mnist.png')
 
 def parse_args():
     parser = argparse.ArgumentParser(description='ResNet for single channel ims')
@@ -138,14 +184,17 @@ def parse_args():
     #                     help='SGD momentum (default: 0.5)')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
-    parser.add_argument('--save-model', action='store_true', default=False,
-                        help='For Saving the current Model. Will overwrite files')
-    parser.add_argument('--save-name', type=str, default='models/resnet_mnist.pt',
+    parser.add_argument('--save-model', type=str, default='models/resnet_mnist.pt',
                         help='Filename to save model to (default: models/resnet_mnist.pt')
     parser.add_argument('--plot', action='store_true', default=False,
                         help='Plot learning curve')
     parser.add_argument('--quiet-scores', action='store_true', default=False,
                         help='Suppress printing of metrics after each epoch')
+    parser.add_argument('--load', type=str, 
+                        help="Path to a MnistResNet model state_dict to load weights from")
+    parser.add_argument('--ignore-warnings', action='store_true', default=False,
+                        help='Suppress printing warnings to stdout')
+    parser.add_argument('--tensorboard', type=str, help='tensorboard runs dir')
     return parser.parse_args()
 
 if __name__ == '__main__':
