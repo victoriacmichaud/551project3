@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -27,7 +28,10 @@ def preprocessTrainMinRect():
 		# plt.show()
 
 		#Get contours of the binary image
-		contoured, ctrs, heir = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
+		# contoured, ctrs, heir = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
+        # I think I'm using a diff openCV version where the return statment has
+        # changed
+		ctrs, _ = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
 
 		#Get the area of the largest rectangle
 		area = 0
@@ -55,7 +59,10 @@ def preprocessTestMinRect():
 
 		ret, thresh = cv2.threshold(img, 240, 255, cv2.THRESH_BINARY)
 
-		contoured, ctrs, heir = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
+		# contoured, ctrs, heir = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
+        # I think I'm using a diff openCV version where the return statment has
+        # changed
+		ctrs, _ = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
 
 		area = 0
 		largestctr = ctrs[0]
@@ -81,7 +88,10 @@ def preprocessTrainMinEllipse():
 
 		ret, thresh = cv2.threshold(img, 240, 255, cv2.THRESH_BINARY)
 
-		contoured, ctrs, heir = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
+		# contoured, ctrs, heir = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
+        # I think I'm using a diff openCV version where the return statment has
+        # changed
+		ctrs, _ = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
 
 		# Get contour of largest ellipse size
 		area = 0
@@ -108,7 +118,10 @@ def preprocessTestMinEllipse():
 
 		ret, thresh = cv2.threshold(img, 240, 255, cv2.THRESH_BINARY)
 
-		contoured, ctrs, heir = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
+		# contoured, ctrs, heir = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
+        # I think I'm using a diff openCV version where the return statment has
+        # changed
+		ctrs, _ = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
 
 		area = 0
 		largestctr = ctrs[0]
@@ -134,7 +147,10 @@ def preprocessTrainNumPixels():
 
 		ret, thresh = cv2.threshold(img, 240, 255, cv2.THRESH_BINARY)
 
-		contoured, ctrs, heir = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
+		# contoured, ctrs, heir = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
+        # I think I'm using a diff openCV version where the return statment has
+        # changed
+		ctrs, _ = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
 
 		#Get contour containing largest number of pixels (area)
 		area = 0
@@ -157,7 +173,10 @@ def preprocessTestNumPixels():
 
 		ret, thresh = cv2.threshold(img, 240, 255, cv2.THRESH_BINARY)
 
-		contoured, ctrs, heir = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
+		# contoured, ctrs, heir = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
+        # I think I'm using a diff openCV version where the return statment has
+        # changed
+		ctrs, _ = cv2.findContours(thresh,1,cv2.CHAIN_APPROX_SIMPLE)
 
 		#Get contour containing largest number of pixels (area)
 		area = 0
@@ -185,27 +204,30 @@ def save_processed(filename, dataset):
 
 """ Largest Rotated Rectangle """
 
-# preprocessTrainMinRect()
-# preprocessTestMinRect()
+print('Rectangle')
+preprocessTrainMinRect()
+preprocessTestMinRect()
 
-# save_processed("train_rect_1.pkl", xtrain)
-# save_processed("test_rect_1.pkl", xtest)
+save_processed("train_rect_1.pkl", xtrain)
+save_processed("test_rect_1.pkl", xtest)
 
 """ Largest Rotated Ellipse """
 
-# preprocessTrainMinEllipse()
-# preprocessTestMinEllipse()
+print('Ellipse')
+preprocessTrainMinEllipse()
+preprocessTestMinEllipse()
 
-# save_processed("train_ellipse_1.pkl", xtrain)
-# save_processed("test_ellipse_1.pkl", xtest)
+save_processed("train_ellipse_1.pkl", xtrain)
+save_processed("test_ellipse_1.pkl", xtest)
 
 """ Greatest Area Contour """
 
-# preprocessTrainNumPixels()
-# preprocessTestNumPixels()
+print('Countour')
+preprocessTrainNumPixels()
+preprocessTestNumPixels()
 
-# save_processed("train_pix_1.pkl", xtrain)
-# save_processed("test_pix_1.pkl", xtest)
+save_processed("train_pix_1.pkl", xtrain)
+save_processed("test_pix_1.pkl", xtest)
 
 #Example
 plt.imshow(train_images[12])
