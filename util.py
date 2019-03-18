@@ -4,6 +4,7 @@ import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 import inspect
+import matplotlib.pyplot as plt
 
 class CustomDataset(Dataset):
     """ torch Dataset generator (to feed to a DataLoader) for our MNIST style
@@ -42,6 +43,49 @@ class CustomDataset(Dataset):
     
     def tensor_y(self):
         return self.transform(self.Y)
+
+class SubmissionDataset(Dataset):
+    """ torch Dataset generator (to feed to a DataLoader) for our MNIST style
+    data
+    X : np.ndarray, images of shape (N, 64, 64)
+    Y : a df of the train_labels.csv, with columns [Id, Category] eg output of
+        pd.read_csv('data/input/train_labels.csv')
+    """
+    def __init__(self, X, transform = transforms.ToTensor()):
+        self.X = X
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.X)
+
+    def __getitem__(self, idx):
+        """ When the sample corresponding to a given index is called, the
+        generator executes the __getitem__ method to generate it.
+        """
+        x = self.X[idx]
+
+        if self.transform:
+            x = self.transform(x)
+
+        # but what about id and label?
+        x.requires_grad_(True)
+        return x
+    
+    def tensor_x(self):
+        return self.transform(self.X)
+    
+def load_submission_data():
+    X = pd.read_pickle('data/input/test_images.pkl')
+
+    Transformer = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((X.mean()/255,), (X.std()/255,))
+    ])
+
+    # X = Transformer(X)
+    X_loader = DataLoader(SubmissionDataset(X, Transformer), batch_size=len(X), shuffle=False)
+
+    return X_loader
 
 def load_data(train_porportion=0.8, split_train=True, include_ids=False):
     """ Split the training data in training/valid sets
@@ -112,3 +156,20 @@ def print_scores(p, r, f1, a, batch_size):
     # just an utility printing function
     for name, scores in zip(("precision", "recall", "F1", "accuracy"), (p, r, f1, a)):
         print(f"\t{name.rjust(14, ' ')}: {sum(scores)/batch_size:.4f}")
+
+def append_metrics(p, r, f1, a, batch_size, metrics):
+    for name, scores in zip(("precision", "recall", "F1", "accuracy"), (p, r, f1, a)):
+        metrics[name].append(sum(scores)/batch_size)
+    return metrics
+
+def plot_f1(metrics, kind='F1'):
+    epochs = len(metrics[kind])
+    y = metrics[kind]
+    x_ax = range(1, epochs)
+    plt.title('Validation ' + kind)
+    plt.xlabel('Epochs')
+    plt.ylabel(kind)
+    plt.plot(x_ax, y)
+    plt.xticks(np.arange(1, x_ax[-1], 1))
+    plt.show()
+
