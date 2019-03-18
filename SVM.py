@@ -18,7 +18,7 @@ from sklearn.preprocessing import normalize
 import matplotlib.pyplot as plt
 
 # Local
-from plot_confusion_matrix import plot_confusion_matrix
+from util import plot_confusion_matrix
 
 
 def main():
