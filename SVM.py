@@ -23,22 +23,23 @@ test_images = pd.read_pickle('./test_rect_1.pkl')
 labels_formatted = train_labels.as_matrix(columns=train_labels.columns[1:])
 
 X, testX, Y, testY = train_test_split(train_images, labels_formatted, test_size = 0.2)
-print("Array shapes: ")
-print(np.shape(X), np.shape(testX), np.shape(Y), np.shape(testY))
+#print("Array shapes: ")
+#print(np.shape(X), np.shape(testX), np.shape(Y), np.shape(testY))
 
 
 nsamples, nX, nY = np.shape(X)
 X = np.reshape(X, (nsamples, nX*nY))
 Y = np.reshape(Y, (np.shape(Y)[0], ))
-print("Reshaped: ", np.shape(X), np.shape(Y))
 
-# #Implement SVM
+#print("Reshaped: ", np.shape(X), np.shape(Y))
+
+# Implement SVM
 svm = LinearSVC(verbose=3,max_iter=10000)
 svm.fit(X, Y) #train the SVM
 
 predictY = svm.predict(testX)
 
-# # Model accuracy
+# Model accuracy
 print("Score: ")
 svm.score(testX, testY)
 print("Accuracy: ")
