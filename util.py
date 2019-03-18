@@ -87,7 +87,7 @@ def load_submission_data():
 
     return X_loader
 
-def load_data(train_porportion=0.8, split_train=True, include_ids=False):
+def load_data(train_file, train_porportion=0.8, split_train=True, include_ids=False):
     """ Split the training data in training/valid sets
     include_ids: 
         true: Ytest/train are returned as dataframes with columns [Id,
@@ -95,7 +95,7 @@ def load_data(train_porportion=0.8, split_train=True, include_ids=False):
         false: Ytest/train are returned as np arrays containing just Category
     """
 
-    train_images = pd.read_pickle('data/input/train_images.pkl')
+    train_images = pd.read_pickle(train_file)
     train_labels = pd.read_csv('data/input/train_labels.csv')
 
     if split_train:
@@ -113,14 +113,16 @@ def load_data(train_porportion=0.8, split_train=True, include_ids=False):
     else:
         return train_images, train_labels
 
-def data_loaders(train_params, test_params, transfer_learning=False):
+def data_loaders(train_params, test_params,
+                 train_file='data/input/train_images.pkl',
+                 transfer_learning=False):
     """ Return torch.util.data.DataLoader objects for train and valid sets
 
     <train/test>_params should contain at least these keys:
         'batch_size': <int>
         'shuffle': <bool>
     """
-    X, Y, Xtest, Ytest = load_data(include_ids=True)
+    X, Y, Xtest, Ytest = load_data(train_file, include_ids=True)
 
     # Use full training set to calculate metrics for normalizations
     X_full = np.vstack((X, Xtest))
