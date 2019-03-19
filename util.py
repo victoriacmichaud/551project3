@@ -15,7 +15,7 @@ class CustomDataset(Dataset):
     Y : a df of the train_labels.csv, with columns [Id, Category] eg output of
         pd.read_csv('data/input/train_labels.csv')
     """
-    def __init__(self, X, labels, transform = transforms.ToTensor()):
+    def __init__(self, X, labels, transform):
         self.X = X
         self.labels = labels
         self.ID = np.array(self.labels['Id'])
@@ -76,7 +76,8 @@ class SubmissionDataset(Dataset):
     def tensor_x(self):
         return self.transform(self.X)
     
-def load_submission_data():
+def submission_data_loader(batch_size):
+    """Kinda janky way to generate the submission DataLoader in a panic."""
     X = pd.read_pickle('data/input/test_images.pkl')
 
     Transformer = transforms.Compose([
@@ -85,7 +86,7 @@ def load_submission_data():
     ])
 
     # X = Transformer(X)
-    X_loader = DataLoader(SubmissionDataset(X, Transformer), batch_size=len(X), shuffle=False)
+    X_loader = DataLoader(SubmissionDataset(X, Transformer), batch_size=batch_size, shuffle=False)
 
     return X_loader
 

@@ -2,7 +2,7 @@ import torch
 from torchvision.models.resnet import ResNet, BasicBlock, Bottleneck
 
 class MnistResNet(ResNet):
-    """ ResNet adapted for single (from 3) channel images
+    """ ResNet18 adapted for single (from 3) channel images
     
     https://zablo.net/blog/post/using-resnet-for-mnist-in-pytorch-tutorial
     """
