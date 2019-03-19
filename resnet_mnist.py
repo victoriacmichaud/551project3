@@ -9,8 +9,9 @@ import time
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 import pandas as pd
+import os
+import sys
 import warnings
 
 # Try to make tensorboardX work
@@ -19,7 +20,8 @@ from tensorboardX import SummaryWriter
 
 # Local imports
 import util
-from MnistResNet import MnistResNet
+from MnistResNet import MnistResNet152 as MnistResNet
+import MnistResNet as Nets
 
 def main():
     args = parse_args()
@@ -43,7 +45,8 @@ def main():
 
 
     # Init model and move to gpu, if possible
-    model = MnistResNet().to(device)
+    model = select_resnet(args.depth)
+    model.to(device)
     if args.load:
         model.load_state_dict(torch.load(args.load))
         print('Loaded model weights from', args.load)
@@ -51,7 +54,8 @@ def main():
     # Get the DataLoaders for train and validation (test) sets
     train_params = {'batch_size': args.batch_size, 'shuffle': True}
     test_params = {'batch_size': args.test_batch_size, 'shuffle': False}
-    train_loader, val_loader = util.data_loaders(test_params, train_params)
+    train_loader, val_loader = util.data_loaders(test_params, train_params,
+                                                train_file=args.train_ims)
 
     # your loss function, cross entropy works well for multi-class problems
     loss_function = nn.CrossEntropyLoss() 
@@ -170,32 +174,46 @@ def main():
         plt.savefig('resnet_mnist.png')
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='ResNet for single channel ims')
-    parser.add_argument('--batch-size', type=int, default=64, metavar='N',
-                        help='input batch size for training (default: 64)')
+    p = argparse.ArgumentParser(description='ResNet for single channel ims')
+    p.add_argument('--batch-size', type=int, default=64, metavar='N',
+                   help='input batch size for training (default: 64)')
+    p.add_argument('--test-batch-size', type=int, default=128, metavar='N',
+                   help='input batch size for testing (default: 128)')
+    p.add_argument('--epochs', type=int, default=10, metavar='N',
+                   help='number of epochs to train (default: 10)')
+    p.add_argument('--seed', type=int, default=1, metavar='S',
+                   help='random seed (default: 1)')
+    p.add_argument('--save-model', type=str, default='models/resnet_mnist.pt',
+                   help='Filename to save model to (default: models/resnet_mnist.pt')
+    p.add_argument('--plot', action='store_true', default=False, 
+                   help='Plot learning curve')
+    p.add_argument('--quiet-scores', action='store_true', default=False,
+                   help='Suppress printing of metrics after each epoch')
+    p.add_argument('--load', type=str, metavar='PYTORCH_STATE_DICT',
+                   help="Path to a MnistResNet model state_dict to load weights from")
+    p.add_argument('--ignore-warnings', action='store_true', default=False,
+                   help='Suppress printing warnings to stdout')
+    p.add_argument('--tensorboard', '-tb', type=str, metavar='LOG_DIR',
+                   help='tensorboard log dir')
+    p.add_argument('--train-ims', type=str, metavar='PICKLE_FILE',
+                   default='data/input/train_images.pkl',
+                   help='Training images pkl to load (default data/input/train_images.pkl')
+    p.add_argument('--depth', type=int, default=18, choices=[18, 50, 101, 152],
+                   help='ResNet depth. (default: 18)')
+    return p.parse_args()
 
-    parser.add_argument('--test-batch-size', type=int, default=500, metavar='N',
-                        help='input batch size for testing (default: 500)')
-    parser.add_argument('--epochs', type=int, default=10, metavar='N',
-                        help='number of epochs to train (default: 10)')
-    # parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
-    #                     help='learning rate (default: 0.01)')
-    # parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
-    #                     help='SGD momentum (default: 0.5)')
-    parser.add_argument('--seed', type=int, default=1, metavar='S',
-                        help='random seed (default: 1)')
-    parser.add_argument('--save-model', type=str, default='models/resnet_mnist.pt',
-                        help='Filename to save model to (default: models/resnet_mnist.pt')
-    parser.add_argument('--plot', action='store_true', default=False,
-                        help='Plot learning curve')
-    parser.add_argument('--quiet-scores', action='store_true', default=False,
-                        help='Suppress printing of metrics after each epoch')
-    parser.add_argument('--load', type=str, 
-                        help="Path to a MnistResNet model state_dict to load weights from")
-    parser.add_argument('--ignore-warnings', action='store_true', default=False,
-                        help='Suppress printing warnings to stdout')
-    parser.add_argument('--tensorboard', type=str, help='tensorboard runs dir')
-    return parser.parse_args()
+def select_resnet(depth):
+    if depth == 18:
+        return Nets.MnistResNet()
+    elif depth == 50:
+        return Nets.MnistResNet50()
+    elif depth == 101:
+        return Nets.MnistResNet101()
+    elif depth == 152:
+        return Nets.MnistResNet152()
+    else:
+        print("WARN: Unsupported arg for ResNet depth. Returning None.")
+        return None
 
 if __name__ == '__main__':
     main()

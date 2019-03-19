@@ -5,6 +5,8 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 import inspect
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+from sklearn.utils.multiclass import unique_labels
 
 class CustomDataset(Dataset):
     """ torch Dataset generator (to feed to a DataLoader) for our MNIST style
@@ -13,7 +15,7 @@ class CustomDataset(Dataset):
     Y : a df of the train_labels.csv, with columns [Id, Category] eg output of
         pd.read_csv('data/input/train_labels.csv')
     """
-    def __init__(self, X, labels, transform = transforms.ToTensor()):
+    def __init__(self, X, labels, transform):
         self.X = X
         self.labels = labels
         self.ID = np.array(self.labels['Id'])
@@ -74,7 +76,8 @@ class SubmissionDataset(Dataset):
     def tensor_x(self):
         return self.transform(self.X)
     
-def load_submission_data():
+def submission_data_loader(batch_size):
+    """Kinda janky way to generate the submission DataLoader in a panic."""
     X = pd.read_pickle('data/input/test_images.pkl')
 
     Transformer = transforms.Compose([
@@ -83,7 +86,7 @@ def load_submission_data():
     ])
 
     # X = Transformer(X)
-    X_loader = DataLoader(SubmissionDataset(X, Transformer), batch_size=len(X), shuffle=False)
+    X_loader = DataLoader(SubmissionDataset(X, Transformer), batch_size=batch_size, shuffle=False)
 
     return X_loader
 
@@ -175,3 +178,60 @@ def plot_f1(metrics, kind='F1'):
     plt.xticks(np.arange(1, x_ax[-1], 1))
     plt.show()
 
+def plot_confusion_matrix(y_true, y_pred, classes,
+                          normalize=False,
+                          title=None,
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+
+    def formatFloat(val, fmt):
+        """To get floats w/o leading 0 in the cm plot"""
+        ret = format(val, fmt)
+        if ret.startswith("0."):
+            return ret[1:]
+        if ret.startswith("-0."):
+            return "-" + ret[2:]
+        return ret
+
+    if not title:
+        if normalize:
+            title = 'Normalized confusion matrix'
+        else:
+            title = 'Confusion matrix, without normalization'
+
+    # Compute confusion matrix
+    cm = confusion_matrix(y_true, y_pred)
+    # Only use the labels that appear in the data
+    classes = classes[unique_labels(y_true, y_pred)]
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+    fig, ax = plt.subplots()
+    im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
+    ax.figure.colorbar(im, ax=ax)
+    # We want to show all ticks...
+    ax.set(xticks=np.arange(cm.shape[1]),
+           yticks=np.arange(cm.shape[0]),
+           # ... and label them with the respective list entries
+           xticklabels=classes, yticklabels=classes,
+           title=title,
+           ylabel='True label',
+           xlabel='Predicted label')
+
+    # Rotate the tick labels and set their alignment.
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+
+    # Loop over data dimensions and create text annotations.
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            ax.text(j, i, formatFloat(cm[i, j], fmt),
+                    ha="center", va="center",
+                    color="white" if cm[i, j] > thresh else "black")
+    fig.tight_layout()
+    return ax
