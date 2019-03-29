@@ -9,14 +9,14 @@ from datetime import date
 
 # Local imports
 import util
-import resnet_mnist.select_resnet as select_resnet
+import MnistResNet as Nets
 
 def main():
     p = argparse.ArgumentParser(description='Write Kaggle submission with a loaded resnet')
     p.add_argument('model_weights', type=str, help='MnistResNet weights to load')
     p.add_argument('--depth', type=int, default=18, choices=[18, 50, 101, 152],
                    help='ResNet depth. Must match the loaded weights (default: 18)')
-    p.add_argument('batch_size', type=int, default=128, 
+    p.add_argument('--batch_size', type=int, default=128, 
                    help='DatLoader batch size (default: 128)')
     args = p.parse_args()
 
@@ -51,6 +51,19 @@ def main():
     outfile = os.path.join('data/output', outname)
     print('Writing submission csv for %s to %s' %(args.model_weights, outfile))
     write_submission(outfile, ypred)
+
+def select_resnet(depth):
+    if depth == 18:
+        return Nets.MnistResNet()
+    elif depth == 50:
+        return Nets.MnistResNet50()
+    elif depth == 101:
+        return Nets.MnistResNet101()
+    elif depth == 152:
+        return Nets.MnistResNet152()
+    else:
+        print("WARN: Unsupported arg for ResNet depth. Returning None.")
+        return None
 
 def write_submission(outfile, Y_pred):
     """ Write Id,Category csv for submission to kaggle

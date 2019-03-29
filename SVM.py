@@ -33,10 +33,7 @@ def main():
     input_dir = 'data/input'
     train_labels = pd.read_csv(pj(input_dir, 'train_labels.csv'))
 
-    # pix_1 and ellipse_1 have extra images in them (3x and 2x), so they don't
-    # match up with the training labels anymore, so they're excluded for now.
-    # suffixes = ['images', 'pix_1', 'ellipse_1', 'rect_1']
-    suffixes = ['images', 'rect_1']
+    suffixes = ['images', 'pix_1', 'ellipse_1', 'rect_1']
     for s in suffixes:
         f = '_'.join(('train', s +'.pkl')) 
         train_images = pd.read_pickle(pj(input_dir, f))
